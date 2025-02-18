@@ -1,0 +1,8 @@
+# Meta --------------------------------------------------------------------
+# Author:        Lisbeth Vargas
+# Date Created:  1/29/2025
+# Date Edited:   1/31/2025
+# Homework 1-2
+
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load(tidyverse, ggplot2, dplyr, lubridate, stringr, readxl, data.table, gdata, scales)
