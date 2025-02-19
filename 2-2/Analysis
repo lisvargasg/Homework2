@@ -14,7 +14,7 @@ report_counts <- duplicate.hcris %>%
   group_by(fyear) %>%
   summarise(num_hospitals = n_distinct(provider_number))
 
-ggplot(report_counts, aes(x = fyear, y = num_hospitals)) +
+q1 = ggplot(report_counts, aes(x = fyear, y = num_hospitals)) +
     geom_line() +
     labs(title = "Number of Hospitals Filing More than One Report per Year",
              x = "Fiscal Year",
@@ -36,7 +36,7 @@ final.hcris.data$fyear <- as.factor(final.hcris.data$year)
 final.hcris.data <- final.hcris.data %>%
   filter(!is.na(tot_charges))
 
-ggplot(final.hcris.data, aes(x = fyear, y = log(tot_charges))) +
+q3 = ggplot(final.hcris.data, aes(x = fyear, y = log(tot_charges))) +
   geom_violin(fill = "lightblue", color = "darkblue") +
   labs(
     title = "Log-transformed Distribution of Total Charges by Year",
@@ -47,17 +47,18 @@ ggplot(final.hcris.data, aes(x = fyear, y = log(tot_charges))) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 # Question 4: Distribution of Estimated Prices
-final.hcris.data <- final.hcris.data %>%
-  mutate(discount_factor = 1 - tot_discounts / tot_charges)
+discount_factor = 1-tot_discounts/tot_charges
+price_num = (ip_charges + icu_charges + ancillary_charges)*discount_factor - tot_mcare_payment
+price_denom = tot_discharges - mcare_discharges
+price = price_num/price_denom
 
-final.hcris.data <- final.hcris.data %>%
-  mutate(price_num = (ip_charges + icu_charges + ancillary_charges) * discount_factor - tot_mcare_payment)
-
-final.hcris.data <- final.hcris.data %>%
-  mutate(price_denom = tot_discharges - mcare_discharges)
-
-final.hcris.data <- final.hcris.data %>%
-  mutate(price = price_num / price_denom)
+hcris.data <- hcris.data %>%
+  mutate(
+    discount_factor = 1 - tot_discounts / tot_charges,  
+    price_num = (ip_charges + icu_charges + ancillary_charges) * discount_factor - tot_mcare_payment, 
+    price_denom = tot_discharges - mcare_discharges,  
+    price = price_num / price_denom  
+  )
 
 quantiles <- quantile(final.hcris.data$price, c(0.01, 0.99), na.rm = TRUE)
 final.hcris.data <- final.hcris.data %>%
@@ -65,7 +66,7 @@ final.hcris.data <- final.hcris.data %>%
 
 final.hcris.data$fyear <- as.factor(final.hcris.data$fyear)
 
-ggplot(final.hcris.data, aes(x = fyear, y = price)) +
+q4 = ggplot(final.hcris.data, aes(x = fyear, y = price)) +
   geom_violin(fill = "lightblue", color = "darkblue") +  
   labs(
     title = "Distribution of Estimated Prices by Year",
@@ -75,7 +76,10 @@ ggplot(final.hcris.data, aes(x = fyear, y = price)) +
   theme_minimal() +  
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-## DEFINE PENALTY
+## SECOND HALF
+hcris.data <- hcris.data %>%
+  filter(year == 2012)
+
 final.hcris <- hcris.data %>% ungroup() %>%
   filter(price_denom>100, !is.na(price_denom), 
          price_num>0, !is.na(price_num),
@@ -85,3 +89,37 @@ final.hcris <- hcris.data %>% ungroup() %>%
           hrrp_payment = ifelse(is.na(hrrp_payment),0,abs(hrrp_payment)), #<<
     penalty = (hvbp_payment-hrrp_payment<0)) #<<
 
+# Question 5: Average Price by Penalty
+mean.pen <- round(mean(final.hcris$price[which(final.hcris$penalty==1)]))
+mean.nopen <- round(mean(final.hcris$price[which(final.hcris$penalty==0)]))
+
+# Question 6: Average Price, Bed Size Quartiles
+hcris.data <- hcris.data %>%
+  mutate(
+    bed_quartile = ntile(beds, 4),
+    quartile_1 = if_else(bed_quartile == 1, 1, 0),
+    quartile_2 = if_else(bed_quartile == 2, 1, 0),
+    quartile_3 = if_else(bed_quartile == 3, 1, 0),
+    quartile_4 = if_else(bed_quartile == 4, 1, 0),
+    penalty = (hrrp_payment + hvbp_payment) < 0,
+    ip_charges = coalesce(ip_charges, 0),
+    icu_charges = coalesce(icu_charges, 0),
+    ancillary_charges = coalesce(ancillary_charges, 0),
+    tot_mcare_payment = coalesce(tot_mcare_payment, 0),
+    tot_discharges = coalesce(tot_discharges, 0),
+    mcare_discharges = coalesce(mcare_discharges, 0),
+    discount_factor = 1 - tot_discounts / tot_charges,
+    price_num = (ip_charges + icu_charges + ancillary_charges) * discount_factor - tot_mcare_payment,
+    price_denom = tot_discharges - mcare_discharges,
+    price = if_else(price_denom == 0 | is.na(price_num), NA_real_, price_num / price_denom)
+  )
+
+avg_price_by_quartile_and_penalty <- hcris.data %>%
+  group_by(bed_quartile, penalty) %>%
+  summarize(
+    avg_price = mean(price, na.rm = TRUE),
+    total_hospitals = n())
+
+print(avg_price_by_quartile_and_penalty)
+
+# Question 7: Average Treatment Effects

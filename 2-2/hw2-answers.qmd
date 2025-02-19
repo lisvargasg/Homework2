@@ -1,0 +1,36 @@
+---
+title: "Homework 2"
+subtitle: "Research in Health Economics, Spring 2025"
+author: "Lisbeth Vargas"
+format:
+    pdf: 
+        output-file: "vargas-hwk2-2"
+        output-ext: "pdf"
+        header-includes: 
+            - \usepackage{float}
+            - \floatplacement{table}{H}
+
+---
+
+```{r}
+#| include: false
+
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load(tidyverse, ggplot2, dplyr, lubridate, readr, readxl, hrbrthemes, fixest,
+               scales, gganimate, gapminder, gifski, png, tufte, plotly, OECD,
+               ggrepel, survey, foreign, devtools, pdftools, kableExtra, modelsummary,
+               kableExtra)
+               
+```
+
+```{r}
+#| include: false
+#| eval: true
+
+load("/Users/lisbethvargas/Desktop/GitHub/Homework2/2-2/hwk2_workspace.Rdata")
+```
+
+
+The following is my submission for Homework 1. Note that the setup and analysis for these responses are in a seperate `R` script. The GitHub repository for this work is available [here](https://github.com/lisvargasg/Homework2.git).
+
+\newpage

@@ -1,11 +1,11 @@
 if (!require("pacman")) install.packages("pacman")
 pacman::p_load(tidyverse, ggplot2, dplyr, lubridate)
 
-source('data-code/HCRISv1996.R')
-source('data-code/HCRISv2010.R')
+source('/Users/lisbethvargas/Desktop/GitHub/Homework2/2-1/data-code/HCRISv1996.R')
+source('/Users/lisbethvargas/Desktop/GitHub/Homework2/2-1/data-code/HCRISv2010.R')
 
-final.hcris.v1996=read_rds('data/output/HCRIS_Data_v1996.rds')
-final.hcris.v2010=read_rds('data/output/HCRIS_Data_v2010.rds')
+final.hcris.v1996=read_rds('/Users/lisbethvargas/Desktop/Github/Homework2/2-1/data/output/HCRIS_Data_v1996.rds')
+final.hcris.v2010=read_rds('/Users/lisbethvargas/Desktop/Github/Homework2/2-1/data/output/HCRIS_Data_v2010.rds')
 
 ## create missing variables for columns introduced in v2010 of hcris forms
 final.hcris.v1996 = final.hcris.v1996 %>%
@@ -122,4 +122,4 @@ final.hcris.data =
   rename(year=fyear) %>%
   arrange(provider_number, year)
 
-write_rds(final.hcris.data,'data/output/HCRIS_Data.rds')
+write_rds(final.hcris.data,'/Users/lisbethvargas/Desktop/Github/Homework2/2-1/data/output/HCRIS_Data.rds')

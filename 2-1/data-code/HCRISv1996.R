@@ -57,4 +57,4 @@ for (i in 1998:2011) {
   
 }
 
-write_rds(final.hcris.v1996,'data/output/HCRIS_Data_v1996.rds')
+write_rds(final.hcris.v1996,'/Users/lisbethvargas/Desktop/Github/Homework2/2-1/data/output/HCRIS_Data_v1996.rds')
