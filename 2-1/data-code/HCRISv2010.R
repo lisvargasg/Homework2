@@ -23,11 +23,11 @@ hcris.vars = rbind(hcris.vars,c('hrrp_payment','E00A18A','07094','00100','numeri
 colnames(hcris.vars)=c("variable","WKSHT_CD","LINE_NUM","CLMN_NUM","source")
 
 for (i in 2010:2017) {
-  HCRIS.alpha=read_csv(paste0("data/input/HCRIS_v2010/HospitalFY",i,"/hosp10_",i,"_ALPHA.CSV"),
+  HCRIS.alpha=read_csv(paste0("/Users/lisbethvargas/Desktop/Github/Homework2/2-1/data/input/HCRIS_v2010/HospitalFY",i,"/hosp10_",i,"_ALPHA.CSV"),
                        col_names=c('RPT_REC_NUM','WKSHT_CD','LINE_NUM','CLMN_NUM','ITM_VAL_NUM'))
-  HCRIS.numeric=read_csv(paste0("data/input/HCRIS_v2010/HospitalFY",i,"/hosp10_",i,"_NMRC.CSV"),
+  HCRIS.numeric=read_csv(paste0("/Users/lisbethvargas/Desktop/Github/Homework2/2-1/data/input/HCRIS_v2010/HospitalFY",i,"/hosp10_",i,"_NMRC.CSV"),
                          col_names=c('RPT_REC_NUM','WKSHT_CD','LINE_NUM','CLMN_NUM','ITM_VAL_NUM'))
-  HCRIS.report=read_csv(paste0("data/input/HCRIS_v2010/HospitalFY",i,"/hosp10_",i,"_RPT.CSV"),
+  HCRIS.report=read_csv(paste0("/Users/lisbethvargas/Desktop/Github/Homework2/2-1/data/input/HCRIS_v2010/HospitalFY",i,"/hosp10_",i,"_RPT.CSV"),
                         col_names=c('RPT_REC_NUM','PRVDR_CTRL_TYPE_CD','PRVDR_NUM','NPI',
                                     'RPT_STUS_CD','FY_BGN_DT','FY_END_DT','PROC_DT',
                                     'INITL_RPT_SW','LAST_RPT_SW','TRNSMTL_NUM','FI_NUM',
@@ -58,4 +58,4 @@ for (i in 2010:2017) {
   }
 }
 
-write_rds(final.hcris.v2010,'data/output/HCRIS_Data_v2010.rds')
+write_rds(final.hcris.v2010,'/Users/lisbethvargas/Desktop/Github/Homework2/2-1/data/output/HCRIS_Data_v2010.rds')
