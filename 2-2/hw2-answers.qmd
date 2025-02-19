@@ -23,14 +23,4 @@ pacman::p_load(tidyverse, ggplot2, dplyr, lubridate, readr, readxl, hrbrthemes, 
                
 ```
 
-```{r}
-#| include: false
-#| eval: true
-
-load("/Users/lisbethvargas/Desktop/GitHub/Homework2/2-2/hwk2_workspace.Rdata")
-```
-
-
-The following is my submission for Homework 1. Note that the setup and analysis for these responses are in a seperate `R` script. The GitHub repository for this work is available [here](https://github.com/lisvargasg/Homework2.git).
-
-\newpage
+The following is my submission for Homework 2. Note that the setup and analysis for these responses are in a seperate `R` script. The GitHub repository for this work is available [here](https://github.com/lisvargasg/Homework2.git).

@@ -47,18 +47,12 @@ q3 = ggplot(final.hcris.data, aes(x = fyear, y = log(tot_charges))) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 # Question 4: Distribution of Estimated Prices
-discount_factor = 1-tot_discounts/tot_charges
-price_num = (ip_charges + icu_charges + ancillary_charges)*discount_factor - tot_mcare_payment
-price_denom = tot_discharges - mcare_discharges
-price = price_num/price_denom
-
-hcris.data <- hcris.data %>%
-  mutate(
-    discount_factor = 1 - tot_discounts / tot_charges,  
+final.hcris.data <- final.hcris.data %>%
+  mutate(discount_factor = 1 - tot_discounts / tot_charges,  
     price_num = (ip_charges + icu_charges + ancillary_charges) * discount_factor - tot_mcare_payment, 
-    price_denom = tot_discharges - mcare_discharges,  
-    price = price_num / price_denom  
-  )
+    price_denom = tot_discharges - mcare_discharges, 
+    price = if_else(price_denom == 0 | is.na(price_num), NA_real_, price_num / price_denom))
+  
 
 quantiles <- quantile(final.hcris.data$price, c(0.01, 0.99), na.rm = TRUE)
 final.hcris.data <- final.hcris.data %>%
@@ -77,10 +71,7 @@ q4 = ggplot(final.hcris.data, aes(x = fyear, y = price)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 ## SECOND HALF
-hcris.data <- hcris.data %>%
-  filter(year == 2012)
-
-final.hcris <- hcris.data %>% ungroup() %>%
+final.hcris.2012 <- hcris.data %>% ungroup() %>%
   filter(price_denom>100, !is.na(price_denom), 
          price_num>0, !is.na(price_num),
          price<100000, 
@@ -94,32 +85,107 @@ mean.pen <- round(mean(final.hcris$price[which(final.hcris$penalty==1)]))
 mean.nopen <- round(mean(final.hcris$price[which(final.hcris$penalty==0)]))
 
 # Question 6: Average Price, Bed Size Quartiles
-hcris.data <- hcris.data %>%
+bed_quartiles <- quantile(final.hcris.2012$beds, probs = c(0.25, 0.50, 0.75), na.rm = TRUE)
+
+final.hcris.2012 <- final.hcris.2012 %>%
   mutate(
-    bed_quartile = ntile(beds, 4),
-    quartile_1 = if_else(bed_quartile == 1, 1, 0),
-    quartile_2 = if_else(bed_quartile == 2, 1, 0),
-    quartile_3 = if_else(bed_quartile == 3, 1, 0),
-    quartile_4 = if_else(bed_quartile == 4, 1, 0),
-    penalty = (hrrp_payment + hvbp_payment) < 0,
-    ip_charges = coalesce(ip_charges, 0),
-    icu_charges = coalesce(icu_charges, 0),
-    ancillary_charges = coalesce(ancillary_charges, 0),
-    tot_mcare_payment = coalesce(tot_mcare_payment, 0),
-    tot_discharges = coalesce(tot_discharges, 0),
-    mcare_discharges = coalesce(mcare_discharges, 0),
-    discount_factor = 1 - tot_discounts / tot_charges,
-    price_num = (ip_charges + icu_charges + ancillary_charges) * discount_factor - tot_mcare_payment,
-    price_denom = tot_discharges - mcare_discharges,
-    price = if_else(price_denom == 0 | is.na(price_num), NA_real_, price_num / price_denom)
-  )
+    Q1 = as.numeric((beds <= bed_quartiles[1]) & (beds > 0)),
+    Q2 = as.numeric((beds > bed_quartiles[1]) & (beds <= bed_quartiles[2])),
+    Q3 = as.numeric((beds > bed_quartiles[2]) & (beds <= bed_quartiles[3])),
+    Q4 = as.numeric(beds > bed_quartiles[3]))
 
-avg_price_by_quartile_and_penalty <- hcris.data %>%
+quartile_summary <- final.hcris.2012 %>%
+  mutate(bed_quartile = case_when(
+    Q1 == 1 ~ "Q1",
+    Q2 == 1 ~ "Q2",
+    Q3 == 1 ~ "Q3",
+    Q4 == 1 ~ "Q4"
+  )) %>%
   group_by(bed_quartile, penalty) %>%
-  summarize(
-    avg_price = mean(price, na.rm = TRUE),
-    total_hospitals = n())
+  summarise(avg_price = mean(price, na.rm = TRUE), .groups = "drop") %>%
+  pivot_wider(names_from = penalty, values_from = avg_price, names_prefix = "penalty_")
 
-print(avg_price_by_quartile_and_penalty)
+print(quartile_summary)
 
 # Question 7: Average Treatment Effects
+install.packages("Matching")
+install.packages("MatchIt")
+install.packages("WeightIt")
+
+## Nearest neighbor matching (1-to-1) with inverse variance distance based on quartiles of bed size
+colnames(final.hcris.2012)
+
+lp.covs <- final.hcris.2012 %>%
+  select(Q1, Q2, Q3, Q4) %>%
+  na.omit()
+
+lp.vars <- final.hcris.2012 %>%
+  select(price, penalty) %>%
+  na.omit()
+
+m.nn.var <- Matching::Match(Y=lp.vars$price,
+                            Tr=lp.vars$penalty,
+                            X=lp.covs,
+                            M=1, 
+                            Weight=1,
+                            estimand="ATE")
+
+matching_data <- final.hcris.2012 %>%
+  select(price, penalty, Q1, Q2, Q3, Q4) %>%
+  mutate(across(c(Q1, Q2, Q3, Q4), as.numeric)) %>% 
+  na.omit()
+
+lp.vars <- matching_data %>%
+  select(price, penalty) %>%
+  na.omit()
+
+lp.covs <- matching_data %>%
+  select(Q1, Q2, Q3, Q4) %>%
+  na.omit()
+
+m.nn.var <- Matching::Match(
+  Y = lp.vars$price,
+  Tr = lp.vars$penalty,
+  X = lp.covs,
+  M = 1,  # 1-to-1 matching
+  Weight = 1,
+  estimand = "ATE",
+  version = "fast"
+)
+
+summary(m.nn.var)
+
+lp.covs <- final.hcris.2012 %>%
+select(Q1, Q2, Q3, Q4) %>%
+na.omit()
+
+lp.vars <- final.hcris.2012 %>%
+select(price, penalty) %>%
+na.omit()
+
+m.nn.var <- Matching::Match(Y=lp.vars$price,
+                            Tr=lp.vars$penalty,
+                            X=lp.covs,
+                            M=1,  #<< 4 nearest neighbbors 
+                            Weight=1,
+                            estimand="ATE")
+
+v.name=data.frame(new=c("Q1","Q2",
+                   "Q3", "Q4"))
+
+## Nearest neighbor matching (1-to-1) with Mahalanobis distance based on quartiles of bed size
+m.nn.md <- Matching::Match(Y=lp.vars$price,
+                           Tr=lp.vars$penalty,
+                           X=lp.covs,
+                           M=1,
+                           Weight=2,
+                           estimand="ATE")
+
+## Inverse propensity weighting, where the propensity scores are based on quartiles of bed size
+logit.model <- glm(penalty ~ Q1 + Q2 + Q3 + Q4, family=binomial, data=final.hcris.2012)
+ps <- fitted(logit.model)
+m.nn.ps <- Matching::Match(Y=lp.vars$price,
+                           Tr=lp.vars$penalty,
+                           X=ps,
+                           M=1,
+                           estimand="ATE")
