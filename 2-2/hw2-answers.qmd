@@ -47,20 +47,26 @@ report_counts <- duplicate.hcris %>%
   summarise(num_hospitals = n_distinct(provider_number))
 
 q1 <- ggplot(report_counts, aes(x = fyear, y = num_hospitals)) +
-    geom_line() +
-    labs(title = "Number of Hospitals Filing More than One Report per Year",
-         x = "Fiscal Year",
-         y = "Number of Hospitals") +
-    theme_minimal()
+  geom_line() +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 12, face = "bold"),  
+    axis.title = element_text(size = 12),  
+    axis.text = element_text(size = 10),  
+    panel.grid = element_blank()) +
+   labs(
+    title = "Number of Hospitals Filing More than One Report per Year",
+    x = "Fiscal Year",
+    y = "Number of Hospitals")
 
 q1
 ``` 
+\vspace{1cm}
 
-\newpage
 \noindent Question 2. After removing/combining multiple reports, how many unique hospital IDs exist in the data?
 9323 <br>
 
-
+\newpage
 
 \noindent Question 3. What is the distribution of total charges in each year? Show your results with a “violin” plot.
 
@@ -72,19 +78,21 @@ final.hcris.data$fyear <- as.factor(final.hcris.data$year)
 final.hcris.data <- final.hcris.data %>%
   filter(!is.na(tot_charges))
 
-q3 = ggplot(final.hcris.data, aes(x = fyear, y = log(tot_charges))) +
-  geom_violin(fill = "lightblue", color = "darkblue") +
-  labs(
-    title = "Log-transformed Distribution of Total Charges by Year",
-    x = "Year",
-    y = "Log of Total Charges"
-  ) +
+q3 <- ggplot(final.hcris.data, aes(x = fyear, y = log(tot_charges))) +
+  geom_violin(fill = "pink", color = "darkblue") +
   theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 12, face = "bold"),  
+    axis.title = element_text(size = 10),  
+    axis.text = element_text(size = 5),  
+    panel.grid = element_blank()) +
+   labs(
+    title = "Distribution of Total Charges by Year",
+    x = "Year",
+    y = "Log of Total Charges")
 
 q3
 ```
-
 \newpage
 \noindent Question 4. What is the distribution of estimated prices in each year? Present your results with a violin plot.
 
@@ -103,22 +111,65 @@ final.hcris.data <- final.hcris.data %>%
 
 final.hcris.data$fyear <- as.factor(final.hcris.data$fyear)
 
-q4 = ggplot(final.hcris.data, aes(x = fyear, y = price)) +
-  geom_violin(fill = "lightblue", color = "darkblue") +  
-  labs(
+q4 <- ggplot(final.hcris.data, aes(x = fyear, y = price)) +
+  geom_violin(fill = "pink", color = "darkblue") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 12, face = "bold"),  
+    axis.title = element_text(size = 10),  
+    axis.text = element_text(size = 5),  
+    panel.grid = element_blank()) +
+   labs(
     title = "Distribution of Estimated Prices by Year",
     x = "Year",
-    y = "Estimated Price"
-  ) +
-  theme_minimal() +  
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+    y = "Estimated Price")
 
 q4
 ```
+\vspace{1cm}
 
-\newpage
 \noindent Question 5. Calculate the average price among penalized versus non-penalized hospitals.
 
 From my analysis, the average price among penalized hospitals is $9657 and $9232 among non-penalized hospitals. 
 
+\vspace{1cm}
+
 \noindent Question 6. Split hospitals into quartiles based on bed size. Provide a table of the average price among treated/control groups for each quartile.
+
+```{r}
+#| echo: false
+library(knitr)
+
+kable(quartile_summary, 
+      col.names = c("Bed Quartile", "Penalty", "No Penalty"),
+      caption = "Average Prices by Bed Quartile and Penalty")
+```
+\vspace{1.5cm}
+
+# Estimate Average Treatment Effects
+
+\noindent Question 7. Find the average treatment effect using each of the following estimators, and present your results in a single table. 
+
+```{r}
+#| echo: false
+library(knitr)
+
+kable(q7, 
+      col.names = c("Method", "ATE", "SE"),
+      caption = "Average Treatment Effect by Estimators")
+```
+
+\vspace{1cm}
+
+\noindent Question 8. With these different treatment effect estimators, are the results similar, identical, very different?
+Neareast Neighbor Matching using Inverse Variance distance and Mahalanobis distance yields an identical ATE and SE. It is expected that these estimators would produce consistent results. The Inverse Propensity Weighting method provided a substantially higher ATE. This estimator may suffer from improper weighting or an issue with propensity scores, which is supported by the failure to produce an estimate for SE. The Simple Linear Regression method did not produce an ATE estimate, but the SE suggests that the estimate may have been unreliable. Although results are not complete, the table suggests that different estimators for ATE provide different estimates. 
+
+\vspace{1cm}
+
+\noindent Question 9. Do you think you’ve estimated a causal effect of the penalty? Why or why not?
+No, I do not believe the estimates provide a causal effect of the penalty on price. An inherent assumption of causality is that there is no spurious relationships, or that there is no unmeasured confounding variable. The various estimators used in Question 7 cannot control for unmeasured confounders. The NA values also suggest that some models may not be very accurate. This means we cannot rely on these methods to capture the causal effect without bias. 
+
+\vspace{1cm}
+
+\noindent Question 10. Tell me one thing you learned and one thing that really aggravated or surprised you.
+This dataset was quite large, my computer definitely felt it. It was a bit frustrating working with such a large amount of data but I found it interesting to work with a proper dataset and run code capable at handling all the observations.  
