@@ -53,8 +53,6 @@ for (i in 1998:2011) {
     final.hcris.v1996=final.reports.1998
   } else {
     final.hcris.v1996=rbind(final.hcris.v1996,get(paste("final.reports.",i,sep="")))
-  }
-  
-}
+  }}
 
 write_rds(final.hcris.v1996,'/Users/lisbethvargas/Desktop/Github/Homework2/2-1/data/output/HCRIS_Data_v1996.rds')
