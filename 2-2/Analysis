@@ -1,7 +1,7 @@
 # Meta --------------------------------------------------------------------
 # Author:        Lisbeth Vargas
 # Date Created:  2/18/2025
-# Date Edited:   2/19/2025
+# Date Edited:   2/20/2025
 # Homework 2-2
 
 if (!require("pacman")) install.packages("pacman")
