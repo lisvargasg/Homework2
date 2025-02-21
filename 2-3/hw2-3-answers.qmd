@@ -63,8 +63,21 @@ q1
 ``` 
 \vspace{1cm}
 
+\newpage
 \noindent Question 2. After removing/combining multiple reports, how many unique hospital IDs exist in the data?
-9323 <br>
+
+```{r}
+#| echo: false
+unique_hospital_count <- final.hcris.data %>%
+  group_by(year) %>%
+  summarise(num_unique_providers = n_distinct(provider_number), .groups = 'drop')
+
+library(knitr)
+
+kable(unique_hospital_count, 
+      col.names = c("Year", "Unique Providers"),
+      caption = "Unique Hospital IDs per Year")
+```
 
 \newpage
 
@@ -141,7 +154,7 @@ From my analysis, the average price among penalized hospitals is $9657 and $9232
 library(knitr)
 
 kable(quartile_summary, 
-      col.names = c("Bed Quartile", "Penalty", "No Penalty"),
+      col.names = c("Bed Size", "No Penalty", "Penalty"),
       caption = "Average Prices by Bed Quartile and Penalty")
 ```
 \vspace{1.5cm}
@@ -156,20 +169,20 @@ library(knitr)
 
 kable(q7, 
       col.names = c("Method", "ATE", "SE"),
-      caption = "Average Treatment Effect by Estimators")
+      caption = "Average Treatment Effect Estimates")
 ```
 
-\vspace{1cm}
+\vspace{0.5cm}
 
 \noindent Question 8. With these different treatment effect estimators, are the results similar, identical, very different?
-Neareast Neighbor Matching using Inverse Variance distance and Mahalanobis distance yields an identical ATE and SE. It is expected that these estimators would produce consistent results. The Inverse Propensity Weighting method provided a substantially higher ATE. This estimator may suffer from improper weighting or an issue with propensity scores, which is supported by the failure to produce an estimate for SE. The Simple Linear Regression method did not produce an ATE estimate, but the SE suggests that the estimate may have been unreliable. Although results are not complete, the table suggests that different estimators for ATE provide different estimates. 
+Neareast Neighbor Matching using Inverse Variance distance and Mahalanobis distance yields an identical ATE and SE. It is expected that these estimators would produce consistent results. The Inverse Propensity Weighting method provided a substantially higher ATE. This estimator may suffer from improper weighting or an issue with propensity scores, which is supported by the failure to produce an estimate for SE. The Simple Linear Regression method did not produce an ATE estimate, but the SE suggests that the estimate may have been unreliable anyway. OLS estimates fail to provide valid estimates of causal treatment effects if there is endogeneity. Although results are not complete, the table suggests that different estimators for ATE provide different estimates and begins to shed insights on OVB and confounders. 
 
-\vspace{1cm}
+\vspace{0.5cm}
 
 \noindent Question 9. Do you think you’ve estimated a causal effect of the penalty? Why or why not?
 No, I do not believe the estimates provide a causal effect of the penalty on price. An inherent assumption of causality is that there is no spurious relationships, or that there is no unmeasured confounding variable. The various estimators used in Question 7 cannot control for unmeasured confounders. The NA values also suggest that some models may not be very accurate. This means we cannot rely on these methods to capture the causal effect without bias. 
 
-\vspace{1cm}
+\vspace{0.5cm}
 
 \noindent Question 10. Tell me one thing you learned and one thing that really aggravated or surprised you.
 This dataset was quite large, my computer definitely felt it. It was a bit frustrating working with such a large amount of data but I found it interesting to work with a proper dataset and run code capable at handling all the observations.  

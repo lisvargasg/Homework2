@@ -22,12 +22,12 @@ q1 = ggplot(report_counts, aes(x = fyear, y = num_hospitals)) +
     theme_minimal()
 
 # Question 2: Unique Hospital IDs
-unique_hospital_count <- length(unique(final.hcris.data$provider_number))
-print(unique_hospital_count)
-
 unique_hospital_count <- final.hcris.data %>%
-  distinct(provider_number) %>%
-  nrow()
+  group_by(year) %>%
+  summarise(num_unique_providers = n_distinct(provider_number), .groups = 'drop')
+
+print(unique_hospital_count)
+dim(unique_hospital_count)
 
 # Question 3: Distribution of Total Charges
 final.hcris.data$tot_charges <- as.numeric(final.hcris.data$tot_charges)
@@ -162,8 +162,8 @@ ate_lm <- coef(lm_model)["penalty"]
 
 # Combine results into a table
 q7 <- data.frame(
-  Method = c("Nearest Neighbor Matching (IV)", "Nearest Neighbor Matching (Mahalanobis)", 
-             "Inverse Propensity Weighting", "Simple Linear Regression"),
+  Method = c("INV", "MAH", 
+             "IPW", "OLS"),
   ATE = c(ate_nn_var, ate_nn_md, ate_ipw, ate_lm),
   SE = c(se_nn_var, se_nn_md, NA, summary(lm_model)$coefficients["penaltyTRUE", "Std. Error"]))
 
